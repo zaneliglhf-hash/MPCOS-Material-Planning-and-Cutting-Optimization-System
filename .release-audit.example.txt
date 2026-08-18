@@ -1,0 +1,6 @@
+# Copy this file to .release-audit.local.txt and place one exact forbidden
+# value on each line. The local file is ignored by Git. Do not commit real
+# names, addresses, customer identifiers, or private contact details here.
+REAL_NAME_TO_BLOCK
+PRIVATE_EMAIL_TO_BLOCK
+WINDOWS_USERNAME_TO_BLOCK

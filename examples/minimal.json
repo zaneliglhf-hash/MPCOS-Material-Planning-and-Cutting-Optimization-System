@@ -1,0 +1,41 @@
+{
+  "batch_name": "fictional-minimal-demo",
+  "mode": "fast",
+  "settings": {
+    "edge_margin_mm": 10,
+    "part_gap_mm": 3,
+    "kerf_mm": 1.5,
+    "min_remnant_width_mm": 100,
+    "min_remnant_height_mm": 100
+  },
+  "products": [],
+  "accessories": [
+    {
+      "order_id": "DEMO-001",
+      "product_id": "DEMO-PRODUCT-001",
+      "name": "DEMO-PANEL-001",
+      "quantity": 1,
+      "width_mm": 200,
+      "height_mm": 100,
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free",
+      "rotation_allowed": true
+    }
+  ],
+  "panel_overrides": [],
+  "stocks": [
+    {
+      "stock_id": "DEMO-STOCK-001",
+      "kind": "standard",
+      "quantity": 1,
+      "width_mm": 1000,
+      "height_mm": 500,
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free"
+    }
+  ]
+}

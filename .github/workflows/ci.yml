@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Run tests and coverage gate
+        run: python -m pytest
+      - name: Audit tracked release content
+        run: python scripts/release_audit.py
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build distributions
+        run: |
+          python -m pip install "build>=1.2,<2"
+          python -m build
+      - name: Install wheel in an isolated environment
+        run: |
+          python -m venv .smoke-venv
+          .smoke-venv/bin/python -m pip install dist/*.whl
+      - name: Run installed wheel smoke test
+        run: .smoke-venv/bin/python -m cutting_layout run examples/minimal.json --output smoke-output

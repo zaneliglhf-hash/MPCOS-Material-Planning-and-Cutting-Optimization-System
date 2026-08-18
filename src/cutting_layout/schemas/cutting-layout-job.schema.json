@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/cutting-layout-job.schema.json",
+  "title": "Cutting Layout Job",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "batch_name",
+    "mode",
+    "settings",
+    "products",
+    "accessories",
+    "panel_overrides",
+    "stocks"
+  ],
+  "properties": {
+    "batch_name": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["fast", "deep"]},
+    "allow_panel_splitting": {"type": "boolean", "default": false},
+    "provisional_notice": {"type": "string", "default": ""},
+    "settings": {"$ref": "#/$defs/settings"},
+    "products": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/product"}
+    },
+    "accessories": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/accessory"}
+    },
+    "panel_overrides": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/override"}
+    },
+    "stocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/stock"}
+    }
+  },
+  "$defs": {
+    "nonEmptyText": {
+      "type": "string",
+      "minLength": 1
+    },
+    "positiveMillimetres": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "positiveQuantity": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "material": {
+      "$ref": "#/$defs/nonEmptyText"
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_margin_mm",
+        "part_gap_mm",
+        "kerf_mm",
+        "min_remnant_width_mm",
+        "min_remnant_height_mm"
+      ],
+      "properties": {
+        "edge_margin_mm": {"type": "number", "minimum": 0},
+        "part_gap_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "kerf_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "min_remnant_width_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "min_remnant_height_mm": {"$ref": "#/$defs/positiveMillimetres"}
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_id",
+        "product_id",
+        "quantity",
+        "length_mm",
+        "width_mm",
+        "height_mm",
+        "dimension_basis",
+        "faces",
+        "material",
+        "thickness_mm",
+        "surface",
+        "rotation_allowed"
+      ],
+      "properties": {
+        "order_id": {"$ref": "#/$defs/nonEmptyText"},
+        "product_id": {"$ref": "#/$defs/nonEmptyText"},
+        "quantity": {"$ref": "#/$defs/positiveQuantity"},
+        "length_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "width_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "height_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "dimension_basis": {"enum": ["outer", "inner"]},
+        "faces": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["top", "bottom", "front", "back", "left", "right"]
+          }
+        },
+        "material": {"$ref": "#/$defs/material"},
+        "thickness_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "surface": {"$ref": "#/$defs/nonEmptyText"},
+        "stock_direction": {"$ref": "#/$defs/nonEmptyText"},
+        "rotation_allowed": {"type": "boolean"}
+      }
+    },
+    "accessory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_id",
+        "product_id",
+        "name",
+        "quantity",
+        "width_mm",
+        "height_mm",
+        "material",
+        "thickness_mm",
+        "surface",
+        "rotation_allowed"
+      ],
+      "properties": {
+        "order_id": {"$ref": "#/$defs/nonEmptyText"},
+        "product_id": {"$ref": "#/$defs/nonEmptyText"},
+        "name": {"$ref": "#/$defs/nonEmptyText"},
+        "quantity": {"$ref": "#/$defs/positiveQuantity"},
+        "width_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "height_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "material": {"$ref": "#/$defs/material"},
+        "thickness_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "surface": {"$ref": "#/$defs/nonEmptyText"},
+        "stock_direction": {"$ref": "#/$defs/nonEmptyText"},
+        "rotation_allowed": {"type": "boolean"}
+      }
+    },
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_id",
+        "product_id",
+        "face",
+        "width_mm",
+        "height_mm",
+        "quantity",
+        "material",
+        "thickness_mm",
+        "surface",
+        "rotation_allowed"
+      ],
+      "properties": {
+        "order_id": {"$ref": "#/$defs/nonEmptyText"},
+        "product_id": {"$ref": "#/$defs/nonEmptyText"},
+        "face": {
+          "enum": ["top", "bottom", "front", "back", "left", "right"]
+        },
+        "width_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "height_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "quantity": {"$ref": "#/$defs/positiveQuantity"},
+        "material": {"$ref": "#/$defs/material"},
+        "thickness_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "surface": {"$ref": "#/$defs/nonEmptyText"},
+        "stock_direction": {"$ref": "#/$defs/nonEmptyText"},
+        "rotation_allowed": {"type": "boolean"}
+      }
+    },
+    "stock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stock_id",
+        "kind",
+        "quantity",
+        "width_mm",
+        "height_mm",
+        "material",
+        "thickness_mm",
+        "surface"
+      ],
+      "properties": {
+        "stock_id": {"$ref": "#/$defs/nonEmptyText"},
+        "kind": {"enum": ["standard", "remnant"]},
+        "quantity": {"$ref": "#/$defs/positiveQuantity"},
+        "width_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "height_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "material": {"$ref": "#/$defs/material"},
+        "thickness_mm": {"$ref": "#/$defs/positiveMillimetres"},
+        "surface": {"$ref": "#/$defs/nonEmptyText"},
+        "stock_direction": {"$ref": "#/$defs/nonEmptyText"}
+      }
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "batch_name": "多产品混排样例",
+  "mode": "fast",
+  "settings": {
+    "edge_margin_mm": 10,
+    "part_gap_mm": 3,
+    "kerf_mm": 1.5,
+    "min_remnant_width_mm": 200,
+    "min_remnant_height_mm": 200
+  },
+  "products": [
+    {
+      "order_id": "A01",
+      "product_id": "BOX-A",
+      "quantity": 2,
+      "length_mm": 1200,
+      "width_mm": 800,
+      "height_mm": 600,
+      "dimension_basis": "outer",
+      "faces": ["top", "bottom", "front", "back", "left", "right"],
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free",
+      "rotation_allowed": true
+    },
+    {
+      "order_id": "B07",
+      "product_id": "BOX-B",
+      "quantity": 3,
+      "length_mm": 900,
+      "width_mm": 700,
+      "height_mm": 500,
+      "dimension_basis": "outer",
+      "faces": ["bottom", "front", "back", "left", "right"],
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free",
+      "rotation_allowed": true
+    },
+    {
+      "order_id": "C03",
+      "product_id": "BOX-C",
+      "quantity": 1,
+      "length_mm": 600,
+      "width_mm": 400,
+      "height_mm": 350,
+      "dimension_basis": "inner",
+      "faces": ["top", "bottom", "front", "back", "left", "right"],
+      "material": "304",
+      "thickness_mm": 1.5,
+      "surface": "2B",
+      "stock_direction": "length",
+      "rotation_allowed": false
+    }
+  ],
+  "accessories": [],
+  "panel_overrides": [
+    {
+      "order_id": "A01",
+      "product_id": "BOX-A",
+      "face": "left",
+      "width_mm": 790,
+      "height_mm": 590,
+      "quantity": 3,
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free",
+      "rotation_allowed": true
+    }
+  ],
+  "stocks": [
+    {
+      "stock_id": "REM-Q235-01",
+      "kind": "remnant",
+      "quantity": 1,
+      "width_mm": 1300,
+      "height_mm": 1000,
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free"
+    },
+    {
+      "stock_id": "STD-Q235-2500x2050",
+      "kind": "standard",
+      "quantity": 5,
+      "width_mm": 2500,
+      "height_mm": 2050,
+      "material": "Q235",
+      "thickness_mm": 2,
+      "surface": "plain",
+      "stock_direction": "free"
+    },
+    {
+      "stock_id": "STD-304-2000x1000",
+      "kind": "standard",
+      "quantity": 2,
+      "width_mm": 2000,
+      "height_mm": 1000,
+      "material": "304",
+      "thickness_mm": 1.5,
+      "surface": "2B",
+      "stock_direction": "length"
+    }
+  ]
+}
