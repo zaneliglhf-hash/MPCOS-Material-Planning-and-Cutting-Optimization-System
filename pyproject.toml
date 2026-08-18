@@ -47,7 +47,7 @@ cutting-layout = "cutting_layout.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-cutting_layout = ["schemas/*.json"]
+cutting_layout = ["schemas/*.json", "fonts/*.ttf", "fonts/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

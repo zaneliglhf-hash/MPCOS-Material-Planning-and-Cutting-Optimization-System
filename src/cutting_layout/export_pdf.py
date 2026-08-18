@@ -1,4 +1,5 @@
 from collections import Counter
+from importlib.resources import as_file, files
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -10,25 +11,17 @@ from reportlab.pdfgen import canvas
 
 from .models import LayoutPlan
 
-PDF_FONT_CANDIDATES = (
-    Path(r"C:\Windows\Fonts\simhei.ttf"),
-    Path(r"C:\Windows\Fonts\msyh.ttc"),
-    Path(r"C:\Windows\Fonts\simsun.ttc"),
-)
+PDF_FONT_RESOURCE = ("fonts", "NotoSansSC-wght.ttf")
 
 
 def _register_font() -> str:
     name = "CuttingLayoutCJK"
     if name in pdfmetrics.getRegisteredFontNames():
         return name
-    for candidate in PDF_FONT_CANDIDATES:
-        if candidate.exists():
-            try:
-                pdfmetrics.registerFont(TTFont(name, str(candidate)))
-                return name
-            except Exception:
-                continue
-    return "Helvetica"
+    resource = files("cutting_layout").joinpath(*PDF_FONT_RESOURCE)
+    with as_file(resource) as font_path:
+        pdfmetrics.registerFont(TTFont(name, str(font_path)))
+    return name
 
 
 def _mm(units: int) -> str:

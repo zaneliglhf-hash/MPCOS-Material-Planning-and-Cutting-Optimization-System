@@ -1,5 +1,7 @@
 from collections import Counter
+from functools import lru_cache
 from hashlib import sha256
+from importlib.resources import as_file, files
 from pathlib import Path
 import re
 
@@ -9,11 +11,7 @@ from .models import LayoutPlan, SheetInstance
 
 A3_LANDSCAPE_PX = (3307, 2339)
 WARNING_COLOR = (180, 32, 37)
-FONT_CANDIDATES = (
-    Path(r"C:\Windows\Fonts\msyh.ttc"),
-    Path(r"C:\Windows\Fonts\simhei.ttf"),
-    Path(r"C:\Windows\Fonts\simsun.ttc"),
-)
+BUNDLED_FONT_RESOURCE = ("fonts", "NotoSansSC-wght.ttf")
 
 
 def color_for_product(product_id: str) -> tuple[int, int, int]:
@@ -21,14 +19,11 @@ def color_for_product(product_id: str) -> tuple[int, int, int]:
     return tuple(100 + value % 121 for value in digest[:3])
 
 
+@lru_cache(maxsize=None)
 def _font(size: int):
-    for candidate in FONT_CANDIDATES:
-        if candidate.exists():
-            try:
-                return ImageFont.truetype(str(candidate), size=size)
-            except OSError:
-                continue
-    return ImageFont.load_default(size=max(10, size))
+    resource = files("cutting_layout").joinpath(*BUNDLED_FONT_RESOURCE)
+    with as_file(resource) as font_path:
+        return ImageFont.truetype(str(font_path), size=size)
 
 
 def _mm(units: int) -> str:

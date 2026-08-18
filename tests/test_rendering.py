@@ -1,7 +1,12 @@
 import pytest
 from PIL import Image
 
-from cutting_layout.rendering import color_for_product, render_previews
+from cutting_layout.rendering import _font, color_for_product, render_previews
+
+
+def test_rendering_uses_bundled_noto_sans_sc_font():
+    family, _ = _font(20).getname()
+    assert family == "Noto Sans SC"
 
 
 def test_product_color_is_stable_and_distinct():

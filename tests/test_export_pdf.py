@@ -6,6 +6,14 @@ from cutting_layout.export_pdf import export_pdf
 from cutting_layout.rendering import render_previews
 
 
+def test_pdf_preserves_chinese_text_without_system_cjk_fonts(split_valid_plan, tmp_path):
+    previews = render_previews(split_valid_plan, tmp_path / "preview")
+    path = export_pdf(split_valid_plan, previews, tmp_path / "portable-cjk.pdf")
+
+    text = "\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+    assert "禁止直接下料" in text
+
+
 def test_pdf_contains_summary_sheet_page_and_batch_name(valid_plan, tmp_path):
     previews = render_previews(valid_plan, tmp_path / "preview")
     path = export_pdf(valid_plan, previews, tmp_path / "cutting-report.pdf")
