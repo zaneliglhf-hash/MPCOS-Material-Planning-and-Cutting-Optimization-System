@@ -2,12 +2,16 @@
 
 > [!WARNING]
 > 本工具采用可复现的启发式排料算法，不证明全局最优，也不能替代结构、工艺或设备人员复核。正式切割前必须人工确认尺寸口径、板厚、切缝、板边留量、连接方式、焊接余量、折弯和装配间隙。项目不生成 NC 或 G-code，不应将未经复核的输出直接用于生产。
+>
+> This tool uses a reproducible heuristic layout algorithm. It does not prove global optimality and does not replace structural, process, or equipment review. Before cutting, verify dimensions, thickness, kerf, edge allowance, connections, weld allowance, bending, and assembly clearances. The project does not generate NC or G-code; do not use unreviewed output directly in production.
 
 `cutting-layout` 是一个本地 Python 命令行工具，用于将多个箱体和矩形附件展开为板件，并在兼容的标准板与矩形余料上进行跨产品混排。一次运行会先校验输入和最终几何结果，再从同一份排料方案生成 PNG、DXF、XLSX、PDF 和 JSON。
 
+`cutting-layout` is a local Python CLI that expands boxes and rectangular accessories into parts, mixes compatible products across standard sheets and rectangular remnants, validates the final geometry, and exports PNG, DXF, XLSX, PDF, and JSON from one layout result.
+
 ![虚构混排样例总览](docs/assets/mixed-batch-overview.png)
 
-## 主要能力
+## 主要能力 / Key capabilities
 
 - 支持箱体外形尺寸和内部净尺寸展开，以及单面尺寸/数量覆盖；
 - 支持矩形附件、标准板和矩形余料；
@@ -17,6 +21,8 @@
 - 按新标准板数量、余料使用、废料、可保留余料、空移距离和产品分散程度择优；
 - 导出前独立检查漏件、重复、重叠、间距、越界、非法旋转、材料和统计一致性；
 - 采用目录事务：任一选定格式失败时，原输出目录保持不变。
+
+The tool also supports customizable channel-steel batch cutting. The optimizer prioritizes fewer handling batches, fewer saw strokes, less purchased stock, and fewer cutting patterns. See the English section below for the complete workflow.
 
 算法是确定性的启发式方法。相同输入、版本和模式会产生可复现结果，但不保证数学意义上的全局最优。
 
