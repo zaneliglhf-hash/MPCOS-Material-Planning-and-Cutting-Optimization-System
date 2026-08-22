@@ -171,3 +171,5 @@ python scripts/generate_channel_batch_plan.py examples/channel_batch_job.json \
 ```
 
 输入字段包括 `demand`、`kerf_mm`、`stock_lengths_mm`、`max_stack`、`min_bars` 和 `max_bars`。优化顺序为最少上下料批次、最少落锯次数、最少原料总长、最少切割模式。英文说明见 [README.en.md](README.en.md)，Codex Skill 见 [skills/channel-cutting-layout/SKILL.md](skills/channel-cutting-layout/SKILL.md)。
+
+原 13 个箱体订单已保留为 [examples/channel_batch_job_13_boxes.json](examples/channel_batch_job_13_boxes.json)，可直接复算。
