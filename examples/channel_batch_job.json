@@ -1,0 +1,11 @@
+{
+  "title": "通用槽钢批量叠切方案 / Generic Channel Batch Cutting Plan",
+  "demand": {"1200": 6, "1800": 6, "2400": 6, "3300": 2, "4200": 2},
+  "kerf_mm": 3,
+  "stock_lengths_mm": [6000, 9000],
+  "max_stack": 6,
+  "min_bars": 1,
+  "max_bars": 100,
+  "baseline_batches": 0,
+  "baseline_strokes": 0
+}

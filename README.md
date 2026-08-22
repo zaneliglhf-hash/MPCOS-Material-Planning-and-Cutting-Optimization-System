@@ -131,6 +131,17 @@ python -m cutting_layout run examples/minimal.json \
 
 当前只处理完整矩形板件和矩形余料，目标上限约为单批 100 种产品、2,000 块板件。不支持孔洞、任意 DXF 轮廓导入、异形套料、折弯展开、三维结构、焊接工艺规划、NC 或 G-code。
 
+## 槽钢批量叠切（兼容原六根订单）
+
+安装可选求解依赖后，可按 JSON 订单生成通用人工优先批量下料图；不传参数时使用示例订单：
+
+```bash
+python -m pip install -e ".[channel]"
+python scripts/generate_channel_batch_plan.py
+```
+
+求解规则为每批 1～6 根同长度原料、同一切割顺序，整批一次上料后连续切完，中途不拆批。每件按 3 mm 锯缝核算。A3 横向 PNG、CSV 和 JSON 结果写入 `output/channel-cutting-plan-batched`。
+
 ## 测试与发布检查
 
 ```bash
@@ -149,3 +160,14 @@ python -m build
 ## 许可证
 
 本项目使用 [MIT License](LICENSE)。
+
+## 通用槽钢模板 / Generic Channel Template
+
+槽钢订单通过 JSON 输入，原材料长度可自定义：
+
+```bash
+python scripts/generate_channel_batch_plan.py examples/channel_batch_job.json \
+  --output output/channel-batch-demo
+```
+
+输入字段包括 `demand`、`kerf_mm`、`stock_lengths_mm`、`max_stack`、`min_bars` 和 `max_bars`。优化顺序为最少上下料批次、最少落锯次数、最少原料总长、最少切割模式。英文说明见 [README.en.md](README.en.md)，Codex Skill 见 [skills/channel-cutting-layout/SKILL.md](skills/channel-cutting-layout/SKILL.md)。
