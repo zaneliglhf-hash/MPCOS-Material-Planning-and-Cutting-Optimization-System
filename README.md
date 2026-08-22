@@ -235,3 +235,7 @@ python -m cutting_layout run examples/minimal.json --output output/minimal-demo
 ```
 
 See the reusable Codex Skill in [skills/channel-cutting-layout/SKILL.md](skills/channel-cutting-layout/SKILL.md), the standalone [English README](README.en.md), and the original 13-box example in [examples/channel_batch_job_13_boxes.json](examples/channel_batch_job_13_boxes.json).
+
+## Skill scope / Skill 作用范围
+
+This Skill is project-local. It is automatically routed only by this repository's [AGENTS.md](AGENTS.md) and is not installed as a global Skill for other projects.

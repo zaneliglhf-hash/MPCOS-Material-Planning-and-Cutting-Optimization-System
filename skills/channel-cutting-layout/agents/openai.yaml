@@ -2,3 +2,5 @@ interface:
   display_name: "Channel Cutting Layout"
   short_description: "Optimize stacked channel-steel cutting plans"
   default_prompt: "Generate a labor-first channel-steel cutting plan from my lengths, quantities, stock lengths, kerf, and stack limit."
+policy:
+  allow_implicit_invocation: false
