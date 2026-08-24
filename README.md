@@ -24,6 +24,13 @@
 
 The tool also supports customizable channel-steel batch cutting. The optimizer prioritizes fewer handling batches, fewer saw strokes, less purchased stock, and fewer cutting patterns. See the English section below for the complete workflow.
 
+方管/矩形管也支持按型号分别排产，并能根据锯床夹持面积自动选择小锯床或大锯床：
+
+```bash
+python scripts/generate_profile_batch_plan.py examples/square_tube_job.json \
+  --output output/square-tube-plan
+```
+
 算法是确定性的启发式方法。相同输入、版本和模式会产生可复现结果，但不保证数学意义上的全局最优。
 
 ## 环境要求

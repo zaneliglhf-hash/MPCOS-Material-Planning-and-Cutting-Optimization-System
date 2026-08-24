@@ -12,12 +12,15 @@ class ChannelBatch:
     multiplicity: int
     pieces_per_bar: tuple[int, ...]
     kerf: int = 3
+    max_stack: int = 6
 
     def __post_init__(self) -> None:
         if self.stock_length <= 0:
             raise ValueError("stock length must be positive")
-        if not 1 <= self.multiplicity <= 6:
-            raise ValueError("batch multiplicity must be between 1 and 6")
+        if self.max_stack < 1:
+            raise ValueError("max_stack must be positive")
+        if not 1 <= self.multiplicity <= self.max_stack:
+            raise ValueError(f"batch multiplicity must be between 1 and {self.max_stack}")
         if not self.pieces_per_bar or any(piece <= 0 for piece in self.pieces_per_bar):
             raise ValueError("pieces_per_bar must contain positive lengths")
         if self.kerf < 0:

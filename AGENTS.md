@@ -2,7 +2,7 @@
 
 ## Automatic skill scope
 
-This repository owns the `channel-cutting-layout` workflow. When a task in this repository involves rectangular sheet nesting, channel-steel cutting, stock lengths, kerf, stacked sawing, A3 cutting sheets, or cutting-plan CSV/JSON output, load and follow [`skills/channel-cutting-layout/SKILL.md`](skills/channel-cutting-layout/SKILL.md).
+This repository owns the `channel-cutting-layout` workflow. When a task in this repository involves rectangular sheet nesting, channel-steel/square-tube cutting, stock lengths, kerf, stacked sawing, saw clamp limits, A3 cutting sheets, or cutting-plan CSV/JSON output, load and follow [`skills/channel-cutting-layout/SKILL.md`](skills/channel-cutting-layout/SKILL.md).
 
 Do not install or invoke this repository's cutting skill as a global/default skill for unrelated repositories. The automatic routing rule applies only while working under this repository root.
 

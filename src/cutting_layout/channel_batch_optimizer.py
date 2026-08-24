@@ -141,6 +141,7 @@ def _extract_plan(
     demand: Counter[int],
     kerf: int,
     status_label: str,
+    max_stack: int = 6,
 ) -> ChannelBatchPlan:
     lengths = sorted(demand, reverse=True)
     raw_batches: list[ChannelBatch] = []
@@ -156,19 +157,20 @@ def _extract_plan(
                 multiplicity=solver.value(multiplicity),
                 pieces_per_bar=tuple(sorted(pieces, reverse=True)),
                 kerf=kerf,
+                max_stack=max_stack,
             )
         )
 
-    # Identical slots can be combined after solving, but never beyond six bars.
+    # Identical slots can be combined after solving, but never beyond the machine limit.
     grouped: dict[tuple[int, tuple[int, ...]], int] = defaultdict(int)
     for batch in raw_batches:
         grouped[batch.stock_length, batch.pieces_per_bar] += batch.multiplicity
     merged: list[ChannelBatch] = []
     for (stock_length, pieces), count in grouped.items():
         while count:
-            multiplicity = min(6, count)
+            multiplicity = min(max_stack, count)
             merged.append(
-                ChannelBatch(stock_length, multiplicity, pieces, kerf=kerf)
+                ChannelBatch(stock_length, multiplicity, pieces, kerf=kerf, max_stack=max_stack)
             )
             count -= multiplicity
     merged.sort(
@@ -333,6 +335,7 @@ def _solve_structured_lower_bound(
                     multiplicity,
                     tuple(sorted(pieces, reverse=True)),
                     kerf=kerf,
+                    max_stack=max_stack,
                 )
             )
         plan = ChannelBatchPlan(
@@ -415,6 +418,7 @@ def improve_channel_batch_plan(
         demand,
         initial_plan.kerf,
         f"fixed-labor-stock:{stock_solver.status_name(stock_status)}",
+        max_stack=max_stack,
     )
 
     variables.model.add(variables.total_stock == best_stock)
@@ -433,6 +437,7 @@ def improve_channel_batch_plan(
             f"fixed-labor-stock:{stock_solver.status_name(stock_status)},"
             f"simplicity:{simple_solver.status_name(simple_status)}"
         ),
+        max_stack=max_stack,
     )
 
 
@@ -551,6 +556,7 @@ def optimize_channel_batches(
             demand,
             kerf,
             ",".join(status_parts),
+            max_stack=max_stack,
         )
 
     raise RuntimeError("no feasible channel batch plan found within bar bounds")

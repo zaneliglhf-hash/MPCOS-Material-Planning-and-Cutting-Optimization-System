@@ -1,0 +1,16 @@
+{
+  "stock_length_mm": 6000,
+  "kerf_mm": 3,
+  "machines": [
+    {"name": "小锯床 / Small saw", "clamp_width_mm": 300, "clamp_height_mm": 350},
+    {"name": "大锯床 / Large saw", "clamp_width_mm": 400, "clamp_height_mm": 500}
+  ],
+  "profiles": [
+    {"name": "100x100x4", "width_mm": 100, "height_mm": 100, "thickness_mm": 4,
+      "demand": {"2080": 10, "550": 55, "1880": 10, "320": 20, "175": 10}},
+    {"name": "120x80x5", "width_mm": 120, "height_mm": 80, "thickness_mm": 5,
+      "demand": {"1360": 6}},
+    {"name": "100x50x3", "width_mm": 100, "height_mm": 50, "thickness_mm": 3,
+      "demand": {"550": 20}}
+  ]
+}
