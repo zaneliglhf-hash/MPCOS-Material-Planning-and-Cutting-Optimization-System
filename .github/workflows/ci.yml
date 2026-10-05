@@ -8,6 +8,17 @@ permissions:
   contents: read
 
 jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Check browser workflow regressions
+        run: node --test tests/test_workbench_ui.cjs
+
   test:
     runs-on: ubuntu-latest
     strategy:

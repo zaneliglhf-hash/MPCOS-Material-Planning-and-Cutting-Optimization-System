@@ -194,6 +194,70 @@ def test_chat_tool_proposal_persistence_and_model_failure(env):
     generate(c,oid);assert completed(c,oid)['versions'][0]['status']=='pending'
 
 
+def proposal_model(updates, feedbacks):
+    def model(root, messages, tools, *, allow_tools):
+        if allow_tools:
+            return {'role':'assistant', 'content':None, 'tool_calls':[{
+                'id':'draft-update', 'type':'function', 'function':{
+                    'name':'prepare_cutting_order', 'arguments':packed(updates)}}]}
+        feedbacks.append(json.loads(messages[-1]['content']))
+        return {'role':'assistant', 'content':'请核对参数。'}
+    return model
+
+
+def test_incremental_chat_keeps_known_fields_until_ready(env):
+    _, app, c = env
+    login(c); oid = order(c); feedbacks = []
+    known = {}
+    for field, value in JOB.items():
+        app.state.service.complete = proposal_model({field:value}, feedbacks)
+        known[field] = value
+        response = c.post(f'/api/orders/{oid}/chat', json={'text':'补充一个参数'})
+        assert response.json()['proposal'] == known
+        data = c.get(f'/api/orders/{oid}').json()
+        assert data['order']['proposal'] == known and data['versions'] == []
+        assert feedbacks[-1]['missing_fields'] == [k for k in JOB if k not in known]
+    assert feedbacks[-1]['status'] == 'ready_for_confirmation'
+
+
+def test_chat_edit_preserves_previous_version_and_unmodified_fields(env):
+    _, app, c = env
+    login(c); oid = order(c)
+    generate(c, oid)
+    old = completed(c, oid)['versions'][0]
+    feedbacks = []
+    app.state.service.complete = proposal_model({'kerf_mm':4}, feedbacks)
+    draft = c.post(f'/api/orders/{oid}/chat', json={'text':'锯缝改为4，其他不变'}).json()['proposal']
+    assert draft == {**old['parameters'], 'kerf_mm':4}
+    data = c.get(f'/api/orders/{oid}').json()
+    assert data['versions'][0]['parameters'] == old['parameters']
+    assert len(data['versions']) == 1 and data['versions'][0]['status'] == 'pending'
+    assert generate(c, oid, key='request-0000000002', job=draft).status_code == 202
+    assert completed(c, oid)['versions'][0]['parameters']['kerf_mm'] == 4
+
+
+def test_demand_edit_replaces_the_full_list(env):
+    _, app, c = env
+    login(c); oid = order(c)
+    generate(c, oid); old = completed(c, oid)['versions'][0]
+    app.state.service.complete = proposal_model({'demand':{'1200':1}}, [])
+    draft = c.post(f'/api/orders/{oid}/chat', json={'text':'只保留1200一件'}).json()['proposal']
+    assert draft == {**old['parameters'], 'demand':{'1200':1}}
+
+
+def test_invalid_combined_draft_does_not_erase_existing_parameters(env):
+    _, app, c = env
+    login(c); oid = order(c)
+    generate(c, oid); old = completed(c, oid)['versions'][0]
+    feedbacks = []
+    # The individual stock field is valid, but cannot fit the existing pieces.
+    app.state.service.complete = proposal_model({'stock_lengths_mm':[1000]}, feedbacks)
+    draft = c.post(f'/api/orders/{oid}/chat', json={'text':'试改原料长度'}).json()['proposal']
+    assert feedbacks[-1]['status'] == 'invalid_input'
+    assert draft == old['parameters']
+    assert c.get(f'/api/orders/{oid}').json()['order']['proposal'] == old['parameters']
+
+
 @pytest.mark.parametrize('arguments,name', [('{}','erase_all'), ('{"kerf_mm":3,"kerf_mm":4}','prepare_cutting_order'), ('{"max_stack":999}','prepare_cutting_order')])
 def test_model_cannot_execute_unapproved_tools_or_bad_args(env,arguments,name):
     _,app,c=env;login(c);oid=order(c)
