@@ -1,257 +1,153 @@
-# Cutting Layout｜多产品矩形板材下料排版工具
+# MPCOS｜制造业下料规划 Agent
 
-## 内部 Agent 工作台（本地试用版）
+**把中文订单需求转成可核对、可留档的下料方案。**
 
-现有下料工具现可通过员工/负责人网页使用：中文参数草稿、人工确认、后台计算、订单版本、复核留痕及资料下载。安装 `.[channel,web]` 后执行 `python -m cutting_layout.workbench serve`。首次账号开通、启动、备份与部署见 [工作台交付说明](docs/workbench-delivery.md)。公司部署与真实内部试用尚待验收。公开源码和本地账号、业务数据、学习材料的隔离规则见 [隐私与发布说明](docs/privacy-and-release.md)。
+[![CI](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/ci.yml/badge.svg)](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/ci.yml)
+[![GitGuardian](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/gitguardian.yml/badge.svg)](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/gitguardian.yml)
+[English](README.en.md) · [启动工作台](#快速开始) · [配置模型](docs/deepseek-setup.md) · [交付与部署](docs/workbench-delivery.md) · [MIT License](LICENSE)
 
-第一次下载后，按 [配置自己的 DeepSeek API 并使用工作台](docs/deepseek-setup.md) 完成安装、密钥配置、内部账号开通和连接验证。每套部署使用自己的密钥；登录公司统一部署的工作台时使用公司服务器配置的密钥。
+MPCOS（Material Planning and Cutting Optimization System）面向内部员工和负责人，将中文需求整理、型材下料计算、方案版本和人工复核串成一个工作台。模型通过工具调用整理参数草稿；计算由 OR-Tools 完成，确认与复核由人员操作，结果保存到可查询的业务记录。
 
+> [!NOTE]
+> 当前为已完成本地验证的**内部试用版**。公司环境部署、真实订单工艺验收及员工/负责人实际试用尚待完成；具体证据见 [验收记录](docs/workbench-acceptance.md)。
 
-> [!WARNING]
-> 本工具采用可复现的启发式排料算法，不证明全局最优，也不能替代结构、工艺或设备人员复核。正式切割前必须人工确认尺寸口径、板厚、切缝、板边留量、连接方式、焊接余量、折弯和装配间隙。项目不生成 NC 或 G-code，不应将未经复核的输出直接用于生产。
->
-> This tool uses a reproducible heuristic layout algorithm. It does not prove global optimality and does not replace structural, process, or equipment review. Before cutting, verify dimensions, thickness, kerf, edge allowance, connections, weld allowance, bending, and assembly clearances. The project does not generate NC or G-code; do not use unreviewed output directly in production.
+## 解决什么问题
 
-`cutting-layout` 是一个本地 Python 命令行工具，用于将多个箱体和矩形附件展开为板件，并在兼容的标准板与矩形余料上进行跨产品混排。一次运行会先校验输入和最终几何结果，再从同一份排料方案生成 PNG、DXF、XLSX、PDF 和 JSON。
+下料业务需要把长度、数量、可用原料和设备参数核对清楚，还要能找回每次修改的方案、确认依据和复核意见。MPCOS 把这些步骤放在同一笔订单下，员工通过网页提交，负责人针对具体版本复核。
 
-`cutting-layout` is a local Python CLI that expands boxes and rectangular accessories into parts, mixes compatible products across standard sheets and rectangular remnants, validates the final geometry, and exports PNG, DXF, XLSX, PDF, and JSON from one layout result.
-
-![虚构混排样例总览](docs/assets/mixed-batch-overview.png)
-
-## 主要能力 / Key capabilities
-
-- 支持箱体外形尺寸和内部净尺寸展开，以及单面尺寸/数量覆盖；
-- 支持矩形附件、标准板和矩形余料；
-- 只在材料、厚度、表面和方向规则一致时混排；
-- 支持旋转限制、板边留量、零件间距和切缝参数；
-- 可为无法整板容纳的矩形箱面生成可追溯分片；
-- 按新标准板数量、余料使用、废料、可保留余料、空移距离和产品分散程度择优；
-- 导出前独立检查漏件、重复、重叠、间距、越界、非法旋转、材料和统计一致性；
-- 采用目录事务：任一选定格式失败时，原输出目录保持不变。
-
-The tool also supports customizable channel-steel batch cutting. The optimizer prioritizes fewer handling batches, fewer saw strokes, less purchased stock, and fewer cutting patterns. See the English section below for the complete workflow.
-
-方管/矩形管也支持按型号分别排产，并能根据锯床夹持面积自动选择小锯床或大锯床：
-
-```bash
-python scripts/generate_profile_batch_plan.py examples/square_tube_job.json \
-  --output output/square-tube-plan
+```mermaid
+flowchart LR
+    A[员工录入需求] --> B[Agent 整理草稿 / 手工填参]
+    B --> C[人工确认参数与来源]
+    C --> D[OR-Tools 下料计算]
+    D --> E[版本与图纸留档]
+    E --> F[负责人通过 / 退回]
+    F -->|修改后生成新版本| B
 ```
 
-算法是确定性的启发式方法。相同输入、版本和模式会产生可复现结果，但不保证数学意义上的全局最优。
+## 已实现的能力
 
-## 环境要求
+| 业务环节 | 当前实现 |
+| --- | --- |
+| 中文需求整理 | DeepSeek 工具调用、缺参补问、分次补参；单字段修改保留其他已知参数，非法组合保留原草稿 |
+| 型材下料计算 | 同材质、同截面的槽钢/方管/矩形管长度下料；按上下料批次、落锯次数、采购长度、切割模式数依次优化 |
+| 员工与负责人协作 | 员工仅操作自己的订单；负责人查看与复核，提交人不能审核自己的版本 |
+| 方案与版本 | 参数、来源、任务状态及 V1/V2 历史留档；新版本重新复核，旧版本保留 |
+| 结果交付 | A3 PNG、CSV、输入/结果 JSON、版本复核记录；展示采购、余料、利用率与需求成品总长度 |
+| 故障与重复操作 | 后台计算、整体超时、同编号提交去重、重启中断恢复、模型请求预算、文件 SHA-256 校验 |
+| 维护与隐私 | 账号维护、离线备份恢复、健康检查、公开源码与密钥/业务数据隔离；提供 Docker 与 HTTPS 配置模板 |
 
+仓库还保留独立的**离线矩形板材 CLI**：箱体板件展开、跨产品混排、矩形余料使用与几何校验，导出 PNG、DXF、XLSX、PDF、JSON。当前员工网页覆盖型材长度下料；板材流程通过 CLI 使用，详见 [板材工具说明](docs/sheet-layout-guide.md)。
 
+## 快速开始
 
-- Python 3.10、3.11、3.12 或 3.13；
-- Windows、macOS 或 Linux；
-- 不需要数据库、云服务、Node.js 或网络连接即可运行核心功能。
-
-## 安装
-
-创建虚拟环境：
+需要 Python 3.10–3.13。以下命令在项目根目录执行；首次可先克隆仓库：
 
 ```bash
+git clone https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System.git
+cd MPCOS-Material-Planning-and-Cutting-Optimization-System
 python -m venv .venv
 ```
 
-激活环境：
-
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-```
+激活环境，按系统选择一条：
 
 ```bash
 # macOS / Linux
 source .venv/bin/activate
 ```
 
-安装项目：
-
-```bash
-python -m pip install -e .
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
 ```
 
-开发者可安装测试和发布工具：
+安装、创建两个独立角色的账号并启动：
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[channel,web]"
+python -m cutting_layout.workbench create-user employee --role employee
+python -m cutting_layout.workbench create-user manager --role manager
+python -m cutting_layout.workbench serve
 ```
 
-## 快速开始
+创建账号时在终端输入至少 12 字符的密码。保持服务终端运行，浏览器打开 <http://127.0.0.1:8765>。仓库不提供预设账号或密码；示例用户名可自行替换。
 
-运行最小虚构样例：
+**手动填参、计算、下载和复核无需模型密钥。** 要启用中文 Agent，在项目根目录、已激活上述环境的交互式终端运行（服务已启动时另开终端）：
 
 ```bash
-python -m cutting_layout run examples/minimal.json --output output/minimal-demo
+python scripts/setup_deepseek.py
 ```
 
-运行多产品混排样例：
+在隐藏输入提示中填写自己的 DeepSeek API Key。配置保存在被 Git 忽略的本机 `.env`；模型请求使用该部署配置的账户。完整说明、Windows 命令与排错见 [DeepSeek 接入指南](docs/deepseek-setup.md)。
+
+### 体验一笔订单
+
+1. 用员工账号新建订单，填写材质、截面规格；不同材质或规格分别建单。
+2. 提供成品长度与数量、可用原料长度、锯缝、经确认的设备叠切上限，让 Agent 整理草稿，或直接手填。
+3. 核对参数、填写工艺来源并确认生成，等待后台计算完成。
+4. 查阅本版统计与图纸，下载资料，再由另一位负责人填写意见并通过或退回。
+5. 修改需求后生成新版本，保留旧版与意见，对新版重新复核。
+
+工艺参数由使用方明确提供或确认，程序不以猜测替代。生成结果为计划辅助资料，实际切割前须由合格人员核对尺寸口径、型材方向、锯缝、端头余量、焊接/装配间隙、设备能力及吊装安全；不生成已批准的 NC/G-code。
+
+## 技术实现
+
+| 部分 | 实现与入口 |
+| --- | --- |
+| 业务 API 与网页 | FastAPI + 原生 HTML/CSS/JavaScript，[workbench/](src/cutting_layout/workbench/) |
+| 数据与身份 | SQLite、scrypt 密码哈希、服务端会话、角色校验与追加式操作记录，[store.py](src/cutting_layout/workbench/store.py) |
+| Agent 与业务流程 | DeepSeek 工具调用、Schema 校验、草稿/确认/计算/复核状态，[service.py](src/cutting_layout/workbench/service.py) |
+| 计算与导出 | OR-Tools 型材求解、既有板材排样与多格式导出，[channel_batch_pipeline.py](src/cutting_layout/channel_batch_pipeline.py) |
+| 运行维护 | 独立计算进程、单进程文件锁、备份恢复，[maintenance.py](src/cutting_layout/workbench/maintenance.py) |
+| 自动验证 | pytest 与覆盖率门槛、Node.js 前端异步回归、打包检查、GitGuardian，[CI](.github/workflows/ci.yml) |
+
+截至 2026-10-05，本地全量回归为 **249 项 Python 测试、7 项前端测试通过，覆盖率 86.69%**；CI 覆盖 Python 3.10–3.13。回放、权限、异常与恢复证据见 [验收记录](docs/workbench-acceptance.md)。
+
+当前工作台使用单台机器、单服务进程和本地 SQLite。Docker/HTTPS 模板已提供，目标环境尚需实际验证；运行范围、资源上限和更新回退见 [交付说明](docs/workbench-delivery.md)。
+
+## 独立 CLI 与示例
 
 ```bash
-python -m cutting_layout run examples/mixed_batch.json --output output/mixed-demo
+# 单规格型材，原料长度与工艺参数取自 JSON
+python scripts/generate_channel_batch_plan.py examples/channel_batch_job.json --output output/channel-demo
+
+# 多规格方管，按锯床夹持范围分组与选机
+python scripts/generate_profile_batch_plan.py examples/square_tube_job.json --output output/profile-demo
+
+# 矩形板材混排
+python -m cutting_layout run examples/mixed_batch.json --output output/sheet-demo
 ```
 
-查看版本：
+型材规则及可复用项目技能见 [channel-cutting-layout](skills/channel-cutting-layout/SKILL.md)。原示例订单保留在 [examples/](examples/)，可复算核对。
+
+<details>
+<summary>查看离线板材 CLI 的虚构输出示例</summary>
+
+![虚构板材混排样例总览](docs/assets/mixed-batch-overview.png)
+
+图中是板材 CLI 的排样结果；员工工作台的型材流程提供独立的 A3、CSV 和 JSON 资料。
+
+</details>
+
+## 文档与开发
+
+| 文档 | 内容 |
+| --- | --- |
+| [工作台交付说明](docs/workbench-delivery.md) | 使用流程、权限、账号、备份恢复与内网部署 |
+| [DeepSeek 接入](docs/deepseek-setup.md) | 自己配置模型密钥、验证连接与常见错误 |
+| [验收记录](docs/workbench-acceptance.md) | 已验证的行为与正式试用待办 |
+| [板材工具说明](docs/sheet-layout-guide.md) | 板件展开、输入字段、输出格式和 CLI 范围 |
+| [隐私与发布](docs/privacy-and-release.md) | 源码、业务数据、凭证与历史隐私的边界 |
+| [贡献指南](CONTRIBUTING.md) / [发布检查](docs/release-checklist.md) | 开发与发布流程 |
+
+开发验证需要额外安装 Node.js 24（仅前端测试使用；运行网页无需 Node.js）：
 
 ```bash
-python -m cutting_layout --version
-```
-
-安装后也可以使用控制台命令 `cutting-layout` 代替 `python -m cutting_layout`。
-
-## 选择输出格式
-
-默认生成全部五种格式。使用 `--formats` 可以只生成需要的格式，名称不区分大小写，重复项会自动去重：
-
-```bash
-python -m cutting_layout run examples/minimal.json \
-  --output output/json-and-dxf \
-  --formats json,dxf
-```
-
-支持的格式：`png`、`dxf`、`xlsx`、`pdf`、`json`。空列表或未知格式属于输入错误，退出码为 `2`。
-
-## 输出文件
-
-| 文件 | 内容 |
-|------|------|
-| `previews/preview-overview.png` | 批次总览、材料组、板材缩略图和指标 |
-| `previews/sheet-*.png` | 每张板材的 A3 横向比例排版图 |
-| `layout-all.dxf` | 板材、板件、编号和余料分图层 CAD 文件 |
-| `parts.xlsx` | 批次汇总、板件清单、排料坐标、板材与余料 |
-| `cutting-report.pdf` | A3 横向可打印下料评审报告 |
-| `result.json` | 所有导出共同使用的已校验结果数据 |
-
-## 输入格式
-
-输入为 UTF-8 JSON。所有尺寸字段使用毫米，最多两位小数。完整结构由 [JSON Schema](src/cutting_layout/schemas/cutting-layout-job.schema.json) 定义，可运行样例见 [minimal.json](examples/minimal.json) 和 [mixed_batch.json](examples/mixed_batch.json)。
-
-关键概念：
-
-- `dimension_basis`：`outer` 表示外形尺寸，`inner` 表示内部净尺寸；
-- 箱体面：`top`、`bottom`、`front`、`back`、`left`、`right`；
-- `panel_overrides`：覆盖指定产品面的最终尺寸、数量、材料或方向规则；
-- `accessories`：直接录入门板、盖板等矩形件；
-- `stocks`：录入 `standard` 标准板或 `remnant` 矩形余料；
-- `rotation_allowed=false`：禁止板件旋转 90°；
-- `mode=fast`：固定候选较少；`mode=deep`：增加固定随机种子候选。
-
-默认展开规则请结合实际连接结构复核。程序不会自动计算折边、搭接、焊缝收缩、坡口或装配公差。
-
-## 错误与退出码
-
-- `0`：成功；
-- `2`：输入、Schema、展开、库存、排料或安全校验错误；
-- `3`：PNG、DXF、XLSX、PDF、JSON 或输出目录提交失败。
-
-成功信息以 JSON 写到标准输出；错误以 JSON 写到标准错误。程序不会把漏件或未完成导出静默标记为成功。
-
-## 当前范围
-
-当前只处理完整矩形板件和矩形余料，目标上限约为单批 100 种产品、2,000 块板件。不支持孔洞、任意 DXF 轮廓导入、异形套料、折弯展开、三维结构、焊接工艺规划、NC 或 G-code。
-
-## 槽钢批量叠切（兼容原六根订单）
-
-安装可选求解依赖后，可按 JSON 订单生成通用人工优先批量下料图；不传参数时使用示例订单：
-
-```bash
-python -m pip install -e ".[channel]"
-python scripts/generate_channel_batch_plan.py
-```
-
-求解规则为每批 1～6 根同长度原料、同一切割顺序，整批一次上料后连续切完，中途不拆批。每件按 3 mm 锯缝核算。A3 横向 PNG、CSV 和 JSON 结果写入 `output/channel-cutting-plan-batched`。
-
-## 测试与发布检查
-
-```bash
+python -m pip install -e ".[dev,channel,web]"
 python -m pytest
-python scripts/release_audit.py
-python scripts/release_audit.py --history
+node --test tests/test_workbench_ui.cjs
+python scripts/release_audit.py --staged
 python -m build
 ```
 
-测试配置要求分支覆盖率不低于 85%。公开发布还需要运行 `ggshield secret scan repo .`。详细步骤见 [发布检查清单](docs/release-checklist.md)。
-
-## 贡献
-
-提交代码或问题前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。不要在 issue、测试、截图或提交历史中包含客户图纸、真实订单、个人信息、密钥或其他生产数据。
-
-## 许可证
-
-本项目使用 [MIT License](LICENSE)。
-
-## 通用槽钢模板 / Generic Channel Template
-
-槽钢订单通过 JSON 输入，原材料长度可自定义：
-
-```bash
-python scripts/generate_channel_batch_plan.py examples/channel_batch_job.json \
-  --output output/channel-batch-demo
-```
-
-输入字段包括 `demand`、`kerf_mm`、`stock_lengths_mm`、`max_stack`、`min_bars` 和 `max_bars`。优化顺序为最少上下料批次、最少落锯次数、最少原料总长、最少切割模式。英文说明见 [README.en.md](README.en.md)，Codex Skill 见 [skills/channel-cutting-layout/SKILL.md](skills/channel-cutting-layout/SKILL.md)。
-
-原 13 个箱体订单已保留为 [examples/channel_batch_job_13_boxes.json](examples/channel_batch_job_13_boxes.json)，可直接复算。
-
----
-
-# English Version
-
-`cutting-layout` is a local Python CLI for validated rectangular sheet layouts and labor-first stacked channel-steel cutting plans. It runs offline and exports visual A3 sheets, CSV details, and JSON verification data.
-
-## Installation
-
-```bash
-python -m venv .venv
-source .venv/bin/activate          # macOS/Linux
-.\\.venv\\Scripts\\Activate.ps1     # Windows PowerShell
-python -m pip install -e ".[dev,channel]"
-```
-
-## Generic channel job
-
-Create a UTF-8 JSON file. `stock_lengths_mm` is configurable and may contain any positive raw-material lengths that can fit the requested pieces:
-
-```json
-{
-  "demand": {"7150": 4, "2674": 8},
-  "kerf_mm": 3,
-  "stock_lengths_mm": [6000, 9000],
-  "max_stack": 6,
-  "min_bars": 1,
-  "max_bars": 100,
-  "baseline_batches": 0,
-  "baseline_strokes": 0,
-  "title": "Channel batch plan"
-}
-```
-
-Run:
-
-```bash
-python scripts/generate_channel_batch_plan.py examples/channel_batch_job.json \
-  --output output/channel-batch-demo
-```
-
-The optimizer minimizes, in order: handling batches, saw strokes, purchased stock length, and pattern groups. Each batch uses identical bars and one repeated cut sequence. The output directory contains A3 PNG pages, `channel-batch-cutting.csv`, and `channel-batch-cutting.json`.
-
-## Safety
-
-This is a planning aid, not structural or process approval. Verify dimensions, orientation, kerf, end allowance, weld/assembly clearances, machine capacity, and lifting safety before cutting. It does not generate NC or G-code.
-
-## Rectangular sheet layouts
-
-The existing sheet-layout workflow remains available:
-
-```bash
-python -m cutting_layout run examples/minimal.json --output output/minimal-demo
-```
-
-See the reusable Codex Skill in [skills/channel-cutting-layout/SKILL.md](skills/channel-cutting-layout/SKILL.md), the standalone [English README](README.en.md), and the original 13-box example in [examples/channel_batch_job_13_boxes.json](examples/channel_batch_job_13_boxes.json).
-
-## Skill scope / Skill 作用范围
-
-This Skill is project-local. It is automatically routed only by this repository's [AGENTS.md](AGENTS.md) and is not installed as a global Skill for other projects.
+提交 issue、代码、截图和日志时，使用虚构数据，避免客户图纸、真实订单、个人信息或有效密钥。本项目使用 [MIT License](LICENSE)。
