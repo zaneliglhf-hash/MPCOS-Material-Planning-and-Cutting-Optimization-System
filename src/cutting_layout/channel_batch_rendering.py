@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from .channel_batch import ChannelBatchPlan
+from .rendering import _font as _bundled_font
 
 
 PAGE_SIZE = (2480, 1754)
@@ -27,14 +28,11 @@ COLORS = (
 
 
 def _font(size: int, bold: bool = False) -> ImageFont.ImageFont:
-    candidates = (
-        Path(r"C:\Windows\Fonts\msyhbd.ttc" if bold else r"C:\Windows\Fonts\msyh.ttc"),
-        Path(r"C:\Windows\Fonts\simhei.ttf"),
-    )
-    for candidate in candidates:
-        if candidate.exists():
-            return ImageFont.truetype(str(candidate), size)
-    return ImageFont.load_default()
+    font = _bundled_font(size)
+    if bold:
+        font = font.font_variant()
+        font.set_variation_by_axes([700])
+    return font
 
 
 def write_channel_batch_csv(
@@ -201,7 +199,8 @@ def _draw_page(
     draw.rectangle((0, height - 76, width, height), fill="#e2e8f0")
     draw.text(
         (55, height - 55),
-        "操作：按批次整批上料并对齐；同批所有槽钢连续切完后整批下料，中途不拆批。净尺寸已按每件3mm锯缝核算。",
+        "操作：按批次整批上料并对齐；同批型材连续切完后整批下料，中途不拆批。"
+        f"每刀锯缝按{plan.kerf}mm核算，生产前须人工复核。",
         font=_font(20, True),
         fill="#7f1d1d",
     )

@@ -1,0 +1,25 @@
+# Ship public source and documentation; never copy local business/learning data.
+graft src
+include README.md README.en.md LICENSE pyproject.toml
+include .env.example
+graft tests
+graft scripts
+graft examples
+graft skills
+include docs/workbench-delivery.md docs/workbench-acceptance.md
+include docs/privacy-and-release.md docs/release-checklist.md
+prune var
+prune output
+prune backups
+prune private-inputs
+prune customer-data
+prune docs/superpowers
+prune docs/codebase
+prune .venv
+prune .smoke-venv
+exclude .local-access.md .release-audit.local.txt .env .env.*
+include .env.example
+exclude docs/agent-lesson-*.md
+global-exclude .DS_Store *.pyc *.pyo *.sqlite* *.db *.db-* *.pem *.key *.p12 *.pfx *.log
+
+prune scripts/node_modules

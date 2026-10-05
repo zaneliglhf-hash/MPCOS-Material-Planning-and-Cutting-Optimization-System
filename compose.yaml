@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      MPCOS_ALLOWED_HOSTS: ${MPCOS_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      MPCOS_SECURE_COOKIE: ${MPCOS_SECURE_COOKIE:-0}
+    volumes:
+      - mpcos-data:/data
+      - mpcos-backups:/backups
+    stop_grace_period: 120s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  mpcos-data:
+  mpcos-backups:

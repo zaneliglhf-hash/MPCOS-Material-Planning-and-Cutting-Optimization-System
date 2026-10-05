@@ -32,6 +32,11 @@ def load_channel_batch_job(path: str | Path) -> ChannelBatchJob:
         payload = json.loads(source.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot read job JSON: {source}") from exc
+    return parse_channel_batch_job(payload)
+
+
+def parse_channel_batch_job(payload: Any) -> ChannelBatchJob:
+    """Validate an in-memory job using the same rules as the JSON file loader."""
     if not isinstance(payload, dict):
         raise ValueError("job JSON must be an object")
 
@@ -44,7 +49,10 @@ def load_channel_batch_job(path: str | Path) -> ChannelBatchJob:
             length = int(raw_length)
         except (TypeError, ValueError) as exc:
             raise ValueError("demand lengths must be integers") from exc
-        demand[_positive_int(length, "demand length")] = _positive_int(
+        length = _positive_int(length, "demand length")
+        if length in demand:
+            raise ValueError("demand contains duplicate normalized lengths")
+        demand[length] = _positive_int(
             raw_count, "demand quantity"
         )
 

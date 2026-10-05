@@ -22,7 +22,7 @@ python -m cutting_layout run examples/minimal.json --output smoke-output
 
 ## Privacy and secrets
 
-- [ ] 当前树审查通过：`python scripts/release_audit.py`。
+- [ ] 当前树审查通过：`python scripts/release_audit.py --staged`（扫描实际暂存内容）。
 - [ ] 历史审查已运行：`python scripts/release_audit.py --history`。
 - [ ] GitGuardian 审查通过：`ggshield secret scan repo .`。
 - [ ] 已人工复核图片、PDF、工作簿、DXF 和其他二进制文件。
@@ -36,3 +36,6 @@ python -m cutting_layout run examples/minimal.json --output smoke-output
 - [ ] 发布标签与 `src/cutting_layout/__init__.py`、`pyproject.toml` 版本一致。
 - [ ] 未提交 `dist/`、`build/`、输出目录、虚拟环境或本地审查禁词表。
 
+
+- [ ] wheel/源码包已扫描；密钥、账号、本地数据库、个人学习材料和截图均隔离。
+- [ ] 提交身份为 GitHub no-reply 邮箱；历史邮箱审查结果单独记录，不把新提交匿名化当成清理旧历史。

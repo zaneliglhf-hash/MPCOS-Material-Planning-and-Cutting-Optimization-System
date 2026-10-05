@@ -1,0 +1,5 @@
+# Replace this hostname with the actual company-owned hostname.
+# Configure MPCOS_ALLOWED_HOSTS to include it and MPCOS_SECURE_COOKIE=1.
+mpcos.example.internal {
+    reverse_proxy 127.0.0.1:8765
+}

@@ -8,7 +8,7 @@
 
 ```bash
 python -m venv .venv
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,channel,web]"
 ```
 
 Windows PowerShell 使用 `.\.venv\Scripts\Activate.ps1` 激活；macOS/Linux 使用 `source .venv/bin/activate`。

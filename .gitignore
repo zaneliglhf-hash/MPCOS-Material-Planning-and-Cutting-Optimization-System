@@ -2,6 +2,9 @@
 docs/superpowers/
 docs/codebase/
 .venv/
+.env
+.env.*
+!.env.example
 __pycache__/
 .pytest_cache/
 output/
@@ -25,3 +28,24 @@ build/
 dist/
 *.egg-info/
 .ruff_cache/
+
+# Internal workbench: business data and local access credentials
+var/
+backups/
+.local-access.md
+
+# Private workstation and learning material
+.DS_Store
+**/.DS_Store
+docs/agent-lesson-*.md
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+.smoke-venv/

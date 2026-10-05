@@ -1,0 +1,11 @@
+{
+  "title": "Agent 入门第一课：虚构教学订单 / Fictional Training Order",
+  "demand": {"1200": 6, "1800": 6},
+  "kerf_mm": 3,
+  "stock_lengths_mm": [4000],
+  "max_stack": 6,
+  "min_bars": 1,
+  "max_bars": 12,
+  "baseline_batches": 0,
+  "baseline_strokes": 0
+}

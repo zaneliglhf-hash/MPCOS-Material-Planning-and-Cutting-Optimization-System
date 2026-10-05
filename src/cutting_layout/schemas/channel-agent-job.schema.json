@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Channel cutting agent tool input",
+  "description": "A single group of identical profiles and material. All dimensions are integer millimetres. Process parameters must be explicitly provided or confirmed.",
+  "type": "object",
+  "required": ["demand", "stock_lengths_mm", "kerf_mm", "max_stack"],
+  "additionalProperties": false,
+  "properties": {
+    "demand": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[1-9][0-9]*$": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "stock_lengths_mm": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "integer", "minimum": 1}
+    },
+    "kerf_mm": {"type": "integer", "minimum": 0},
+    "max_stack": {"type": "integer", "minimum": 1, "maximum": 100},
+    "min_bars": {"type": "integer", "minimum": 1},
+    "max_bars": {"type": "integer", "minimum": 1},
+    "title": {"type": "string", "minLength": 1, "maxLength": 100},
+    "baseline_batches": {"type": "integer", "minimum": 0},
+    "baseline_strokes": {"type": "integer", "minimum": 0}
+  }
+}

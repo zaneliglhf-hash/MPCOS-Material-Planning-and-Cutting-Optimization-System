@@ -1,5 +1,10 @@
 # Cutting Layout｜多产品矩形板材下料排版工具
 
+## 内部 Agent 工作台（本地试用版）
+
+现有下料工具现可通过员工/负责人网页使用：中文参数草稿、人工确认、后台计算、订单版本、复核留痕及资料下载。安装 `.[channel,web]` 后执行 `python -m cutting_layout.workbench serve`。首次账号开通、启动、备份与部署见 [工作台交付说明](docs/workbench-delivery.md)。公司部署与真实内部试用尚待验收。公开源码和本地账号、业务数据、学习材料的隔离规则见 [隐私与发布说明](docs/privacy-and-release.md)。
+
+
 > [!WARNING]
 > 本工具采用可复现的启发式排料算法，不证明全局最优，也不能替代结构、工艺或设备人员复核。正式切割前必须人工确认尺寸口径、板厚、切缝、板边留量、连接方式、焊接余量、折弯和装配间隙。项目不生成 NC 或 G-code，不应将未经复核的输出直接用于生产。
 >
@@ -34,6 +39,8 @@ python scripts/generate_profile_batch_plan.py examples/square_tube_job.json \
 算法是确定性的启发式方法。相同输入、版本和模式会产生可复现结果，但不保证数学意义上的全局最优。
 
 ## 环境要求
+
+
 
 - Python 3.10、3.11、3.12 或 3.13；
 - Windows、macOS 或 Linux；
