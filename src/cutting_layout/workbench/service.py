@@ -174,8 +174,8 @@ class Service:
                 for value in paths if isinstance(paths, list) else [paths]:
                     path = Path(value)
                     relative = path.resolve().relative_to(self.store.root)
-                    safe = self._file(str(relative))
-                    entries.append({'name': safe.name, 'kind': label, 'path': str(relative), 'sha256': digest(safe.read_bytes())})
+                    safe = self._file(relative.as_posix())
+                    entries.append({'name': safe.name, 'kind': label, 'path': relative.as_posix(), 'sha256': digest(safe.read_bytes())})
             result['files'] = entries
             result['review_status'] = 'pending'
             with self.store.transaction() as db:

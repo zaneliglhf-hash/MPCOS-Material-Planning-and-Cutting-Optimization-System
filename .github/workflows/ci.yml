@@ -8,6 +8,21 @@ permissions:
   contents: read
 
 jobs:
+  windows-workbench:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install workbench and test dependencies
+        run: python -m pip install -e ".[dev,channel,web]"
+      - name: Check workbench import and CLI
+        run: python -m cutting_layout.workbench --help
+      - name: Check workflow, process lock, and backup restore
+        run: python -m pytest tests/test_workbench.py --no-cov
+
   browser:
     runs-on: ubuntu-latest
     steps:

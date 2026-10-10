@@ -3,6 +3,7 @@ import argparse
 import getpass
 import os
 from pathlib import Path
+import sqlite3
 from .store import Store
 from .maintenance import backup, restore
 
@@ -28,10 +29,15 @@ def main():
         if password != getpass.getpass('重复密码：'):
             parser.error('两次密码不一致。')
         store = Store(args.data_dir)
-        if args.command == 'create-user':
-            store.create_user(args.username, password, args.role)
-        else:
-            store.reset_password(args.username, password)
+        try:
+            if args.command == 'create-user':
+                store.create_user(args.username, password, args.role)
+            else:
+                store.reset_password(args.username, password)
+        except sqlite3.IntegrityError:
+            parser.error('账号已存在，请使用原账号登录；忘记密码时由维护人员运行 reset-password。')
+        except ValueError as exc:
+            parser.error(str(exc))
         print('账号操作完成。')
     elif args.command == 'disable-user':
         Store(args.data_dir).disable_user(args.username)
@@ -41,8 +47,12 @@ def main():
     elif args.command == 'restore':
         print(restore(args.archive, args.data_dir))
     else:
-        import uvicorn
-        from .app import create_app
+        print('正在启动工作台并加载依赖，首次启动可能需要一些时间。请等待 Uvicorn running 提示后再打开浏览器；保持本终端运行。', flush=True)
+        try:
+            import uvicorn
+            from .app import create_app
+        except ModuleNotFoundError:
+            parser.error('工作台依赖不完整。请按 docs/first-run.md 第 2 步安装 .[channel,web]，再重新启动。')
         uvicorn.run(create_app(args.data_dir), host=args.host, port=args.port, workers=1, access_log=False)
 
 

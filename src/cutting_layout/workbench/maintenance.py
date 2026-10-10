@@ -1,7 +1,8 @@
 """Offline backup and restore with content checksums and process exclusion."""
 from contextlib import contextmanager
-import fcntl
+import errno
 import json
+import os
 from pathlib import Path
 import shutil
 import sqlite3
@@ -10,20 +11,42 @@ import zipfile
 
 from .store import digest, packed
 
+if os.name == 'nt':
+    import msvcrt
+else:
+    import fcntl
+
+
+def _lock(handle, *, release=False):
+    if os.name == 'nt':
+        # Windows locks a byte range from the current file position. Always
+        # use byte zero, even when reopening an existing lock file.
+        if os.fstat(handle.fileno()).st_size == 0:
+            handle.write(b'\0')
+            handle.flush()
+        handle.seek(0)
+        mode = msvcrt.LK_UNLCK if release else msvcrt.LK_NBLCK
+        msvcrt.locking(handle.fileno(), mode, 1)
+    else:
+        mode = fcntl.LOCK_UN if release else fcntl.LOCK_EX | fcntl.LOCK_NB
+        fcntl.flock(handle, mode)
+
 
 @contextmanager
 def exclusive_lock(root):
     root = Path(root)
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with (root / '.service.lock').open('a') as handle:
+    with (root / '.service.lock').open('a+b') as handle:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+            _lock(handle)
+        except OSError as exc:
+            if exc.errno not in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+                raise
             raise RuntimeError('此数据目录正在使用。请先停止服务再维护；服务只允许单进程运行。') from None
         try:
             yield
         finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
+            _lock(handle, release=True)
 
 
 def backup(root, destination):
@@ -52,7 +75,7 @@ def backup(root, destination):
                 if path.is_symlink():
                     raise ValueError('备份拒绝包含符号链接。')
                 if path.is_file():
-                    checksums[str(path.relative_to(root))] = digest(path.read_bytes())
+                    checksums[path.relative_to(root).as_posix()] = digest(path.read_bytes())
         destination.parent.mkdir(parents=True, exist_ok=True)
         # Exclusive creation never overwrites a previous backup.
         with destination.open('xb') as output:

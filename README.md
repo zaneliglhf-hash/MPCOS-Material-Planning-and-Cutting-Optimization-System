@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/ci.yml/badge.svg)](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/ci.yml)
 [![GitGuardian](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/gitguardian.yml/badge.svg)](https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System/actions/workflows/gitguardian.yml)
-[English](README.en.md) · [启动工作台](#快速开始) · [配置模型](docs/deepseek-setup.md) · [交付与部署](docs/workbench-delivery.md) · [MIT License](LICENSE)
+[English](README.en.md) · [首次使用与再次打开](docs/first-run.md) · [启动工作台](#快速开始) · [配置模型](docs/deepseek-setup.md) · [交付与部署](docs/workbench-delivery.md) · [MIT License](LICENSE)
 
 MPCOS（Material Planning and Cutting Optimization System）面向内部员工和负责人，将中文需求整理、型材下料计算、方案版本和人工复核串成一个工作台。模型通过工具调用整理参数草稿；计算由 OR-Tools 完成，确认与复核由人员操作，结果保存到可查询的业务记录。
 
@@ -41,44 +41,66 @@ flowchart LR
 
 ## 快速开始
 
+**第一次使用先看 [完整运行流程](docs/first-run.md)：安装 → 开通账号 → 启动服务 → 登录 → 生成/复核；以后重新打开只需启动服务。**
+
 需要 Python 3.10–3.13。以下命令在项目根目录执行；首次可先克隆仓库：
 
 ```bash
 git clone https://github.com/zaneliglhf-hash/MPCOS-Material-Planning-and-Cutting-Optimization-System.git
 cd MPCOS-Material-Planning-and-Cutting-Optimization-System
-python -m venv .venv
 ```
 
-激活环境，按系统选择一条：
+按操作系统安装、首次创建两个独立角色的账号并启动。后续直接使用 `.venv` 中的 Python，无需激活环境：
+
+```bash
+# macOS / Linux；先确认 python3 为支持的版本
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[channel,web]'
+.venv/bin/python -m cutting_layout.workbench create-user employee --role employee
+.venv/bin/python -m cutting_layout.workbench create-user manager --role manager
+.venv/bin/python -m cutting_layout.workbench serve
+```
+
+```powershell
+# Windows PowerShell；先确认 python 为支持的版本
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[channel,web]"
+.\.venv\Scripts\python.exe -m cutting_layout.workbench create-user employee --role employee
+.\.venv\Scripts\python.exe -m cutting_layout.workbench create-user manager --role manager
+.\.venv\Scripts\python.exe -m cutting_layout.workbench serve
+```
+
+创建账号时在终端输入至少 12 字符的密码。看到服务运行提示后，保持终端运行，自己在浏览器打开 <http://127.0.0.1:8765> 并登录。网页没有开放注册入口，仓库不提供预设账号或密码；示例用户名可自行替换，已有账号不重复创建。
+
+**手动填参、计算、下载和复核无需模型密钥。** 要启用中文 Agent，在项目根目录的交互式终端运行（服务已启动时另开终端）：
 
 ```bash
 # macOS / Linux
-source .venv/bin/activate
+.venv/bin/python scripts/setup_deepseek.py
 ```
 
 ```powershell
 # Windows PowerShell
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe scripts/setup_deepseek.py
 ```
 
-安装、创建两个独立角色的账号并启动：
+在隐藏输入提示中填写自己的 DeepSeek API Key。配置保存在被 Git 忽略的本机 `.env`；模型请求使用该部署配置的账户。完整说明与排错见 [DeepSeek 接入指南](docs/deepseek-setup.md)。
+
+### 重启电脑后怎么再次打开
+
+GitHub 是源码入口，工作台服务需要在本机运行。关闭运行服务的终端或重启电脑后，回到原项目文件夹，再执行：
 
 ```bash
-python -m pip install -e ".[channel,web]"
-python -m cutting_layout.workbench create-user employee --role employee
-python -m cutting_layout.workbench create-user manager --role manager
-python -m cutting_layout.workbench serve
+# macOS / Linux（无需先激活环境）
+.venv/bin/python -m cutting_layout.workbench serve
 ```
 
-创建账号时在终端输入至少 12 字符的密码。保持服务终端运行，浏览器打开 <http://127.0.0.1:8765>。仓库不提供预设账号或密码；示例用户名可自行替换。
-
-**手动填参、计算、下载和复核无需模型密钥。** 要启用中文 Agent，在项目根目录、已激活上述环境的交互式终端运行（服务已启动时另开终端）：
-
-```bash
-python scripts/setup_deepseek.py
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\python.exe -m cutting_layout.workbench serve
 ```
 
-在隐藏输入提示中填写自己的 DeepSeek API Key。配置保存在被 Git 忽略的本机 `.env`；模型请求使用该部署配置的账户。完整说明、Windows 命令与排错见 [DeepSeek 接入指南](docs/deepseek-setup.md)。
+看到 `Uvicorn running on http://127.0.0.1:8765` 后，保持终端运行，再手动打开这个地址并登录。账号和数据沿用原部署，无需重新注册；停止服务按 Ctrl+C。端口占用、目录或依赖错误见 [启动排错](docs/first-run.md#7-常见问题按顺序检查)。
 
 ### 体验一笔订单
 
@@ -101,7 +123,7 @@ python scripts/setup_deepseek.py
 | 运行维护 | 独立计算进程、单进程文件锁、备份恢复，[maintenance.py](src/cutting_layout/workbench/maintenance.py) |
 | 自动验证 | pytest 与覆盖率门槛、Node.js 前端异步回归、打包检查、GitGuardian，[CI](.github/workflows/ci.yml) |
 
-截至 2026-10-05，本地全量回归为 **249 项 Python 测试、7 项前端测试通过，覆盖率 86.69%**；CI 覆盖 Python 3.10–3.13。回放、权限、异常与恢复证据见 [验收记录](docs/workbench-acceptance.md)。
+截至 2026-10-10，本地全量回归为 **254 项 Python 测试通过，覆盖率 87.67%**；另有 7 项前端回归纳入 CI；CI 覆盖 Python 3.10–3.13。回放、权限、异常与恢复证据见 [验收记录](docs/workbench-acceptance.md)。
 
 当前工作台使用单台机器、单服务进程和本地 SQLite。Docker/HTTPS 模板已提供，目标环境尚需实际验证；运行范围、资源上限和更新回退见 [交付说明](docs/workbench-delivery.md)。
 
@@ -133,6 +155,7 @@ python -m cutting_layout run examples/mixed_batch.json --output output/sheet-dem
 
 | 文档 | 内容 |
 | --- | --- |
+| [第一次运行与再次打开](docs/first-run.md) | 安装、账号开通、启动、重启与常见故障 |
 | [工作台交付说明](docs/workbench-delivery.md) | 使用流程、权限、账号、备份恢复与内网部署 |
 | [DeepSeek 接入](docs/deepseek-setup.md) | 自己配置模型密钥、验证连接与常见错误 |
 | [验收记录](docs/workbench-acceptance.md) | 已验证的行为与正式试用待办 |

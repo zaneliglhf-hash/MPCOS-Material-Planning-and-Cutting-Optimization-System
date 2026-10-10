@@ -4,6 +4,8 @@
 
 首次配置或更换自己的官方模型密钥，见 [配置自己的 DeepSeek API 并使用工作台](deepseek-setup.md)，包含 macOS / Linux、Windows 命令及环境变量优先级说明。
 
+首次使用与服务停止后的再次打开，见 [完整运行流程](first-run.md)。网页账号由维护人员开通，GitHub 页面不承载本机服务。
+
 ## 5 分钟启动
 
 在项目根目录执行（macOS / Linux，Python 3.10–3.13；当前实测为 macOS Python 3.12）：

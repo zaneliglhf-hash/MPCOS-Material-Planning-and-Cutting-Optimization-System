@@ -3,6 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import sqlite3
+import subprocess
+import sys
 import threading
 import time
 import zipfile
@@ -303,6 +305,10 @@ def test_backup_restore_roundtrip_and_lock(tmp_path):
         with pytest.raises(RuntimeError):
             with exclusive_lock(root): pass
     archive=backup(root,tmp_path/'backup.zip')
+    with zipfile.ZipFile(archive) as package:
+        manifest = json.loads(package.read('manifest.json'))
+        assert 'files/a/plan.txt' in manifest['sha256']
+        assert set(package.namelist()) == set(manifest['sha256']) | {'manifest.json'}
     restored=restore(archive,tmp_path/'restored')
     new=Store(restored)
     assert (restored/'files'/'a'/'plan.txt').read_text()=='plan'
@@ -316,6 +322,81 @@ def test_backup_restore_roundtrip_and_lock(tmp_path):
         z.writestr('workbench.sqlite3','bad');z.writestr('../escape','bad')
     with pytest.raises(ValueError):restore(bad,tmp_path/'bad-restored')
     assert not (tmp_path/'escape').exists()
+
+
+def test_service_lock_excludes_another_process_and_releases_after_error(tmp_path):
+    root = tmp_path / 'data'
+    code = '''from pathlib import Path
+import sys
+from cutting_layout.workbench.maintenance import exclusive_lock
+try:
+    with exclusive_lock(Path(sys.argv[1])):
+        pass
+except RuntimeError:
+    sys.exit(23)
+'''
+    with pytest.raises(ValueError, match='simulated'):
+        with exclusive_lock(root):
+            result = subprocess.run([sys.executable, '-c', code, str(root)], capture_output=True, timeout=15)
+            assert result.returncode == 23
+            raise ValueError('simulated')
+    result = subprocess.run([sys.executable, '-c', code, str(root)], capture_output=True, timeout=15)
+    assert result.returncode == 0
+
+
+def test_service_lock_does_not_hide_filesystem_failure(tmp_path, monkeypatch):
+    import errno
+    import cutting_layout.workbench.maintenance as maintenance
+    def failed_lock(*args, **kwargs):
+        raise OSError(errno.EIO, 'simulated I/O failure')
+    monkeypatch.setattr(maintenance, '_lock', failed_lock)
+    with pytest.raises(OSError) as exc:
+        with exclusive_lock(tmp_path / 'data'):
+            pytest.fail('lock should fail')
+    assert exc.value.errno == errno.EIO
+
+
+def test_cli_create_user_and_duplicate_are_actionable(tmp_path, monkeypatch, capsys):
+    import cutting_layout.workbench.__main__ as command
+    root = tmp_path / 'data'
+    monkeypatch.setattr(command.getpass, 'getpass', lambda prompt: PASSWORD)
+    monkeypatch.setattr(sys, 'argv', ['mpcos-workbench', '--data-dir', str(root), 'create-user', 'new-employee', '--role', 'employee'])
+    command.main()
+    assert '账号操作完成' in capsys.readouterr().out
+    assert Store(root).login('new-employee', PASSWORD, 'test')[0]
+    with pytest.raises(SystemExit) as exc:
+        command.main()
+    assert exc.value.code == 2
+    assert '账号已存在' in capsys.readouterr().err
+    assert Store(root).login('new-employee', PASSWORD, 'test')[0]
+
+
+def test_cli_invalid_account_input_is_actionable(tmp_path, monkeypatch, capsys):
+    import cutting_layout.workbench.__main__ as command
+    monkeypatch.setattr(command.getpass, 'getpass', lambda prompt: 'short')
+    monkeypatch.setattr(sys, 'argv', ['mpcos-workbench', '--data-dir', str(tmp_path / 'data'), 'create-user', 'new-employee', '--role', 'employee'])
+    with pytest.raises(SystemExit) as exc:
+        command.main()
+    assert exc.value.code == 2
+    assert '12–256' in capsys.readouterr().err
+
+
+def test_cli_missing_web_dependency_shows_installation_guidance(monkeypatch, capsys):
+    import builtins
+    import cutting_layout.workbench.__main__ as command
+    original = builtins.__import__
+    def missing(name, *args, **kwargs):
+        if name == 'uvicorn':
+            raise ModuleNotFoundError('simulated missing uvicorn')
+        return original(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, '__import__', missing)
+    monkeypatch.setattr(sys, 'argv', ['mpcos-workbench', 'serve'])
+    with pytest.raises(SystemExit) as exc:
+        command.main()
+    assert exc.value.code == 2
+    output = capsys.readouterr()
+    assert '正在启动' in output.out
+    assert '.[channel,web]' in output.err and 'docs/first-run.md' in output.err
 
 
 def test_password_reset_revokes_sessions_and_login_throttle(tmp_path):

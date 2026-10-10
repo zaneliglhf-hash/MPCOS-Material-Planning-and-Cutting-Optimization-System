@@ -8,7 +8,7 @@ graft examples
 graft skills
 include docs/workbench-delivery.md docs/workbench-acceptance.md
 include docs/privacy-and-release.md docs/release-checklist.md
-include docs/deepseek-setup.md docs/sheet-layout-guide.md
+include docs/deepseek-setup.md docs/sheet-layout-guide.md docs/first-run.md
 include docs/assets/mixed-batch-overview.png
 prune var
 prune output
