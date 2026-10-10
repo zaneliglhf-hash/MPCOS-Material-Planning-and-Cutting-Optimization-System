@@ -123,7 +123,7 @@ GitHub 是源码入口，工作台服务需要在本机运行。关闭运行服�
 | 运行维护 | 独立计算进程、单进程文件锁、备份恢复，[maintenance.py](src/cutting_layout/workbench/maintenance.py) |
 | 自动验证 | pytest 与覆盖率门槛、Node.js 前端异步回归、打包检查、GitGuardian，[CI](.github/workflows/ci.yml) |
 
-截至 2026-10-10，本地全量回归为 **255 项 Python 测试通过，覆盖率 87.69%**；另有 7 项前端回归纳入 CI；CI 覆盖 Python 3.10–3.13。回放、权限、异常与恢复证据见 [验收记录](docs/workbench-acceptance.md)。
+截至 2026-10-10，本地全量回归为 **256 项 Python 测试通过，覆盖率 88.01%**；另有 7 项前端回归纳入 CI；CI 覆盖 Python 3.10–3.13。回放、权限、异常与恢复证据见 [验收记录](docs/workbench-acceptance.md)。
 
 当前工作台使用单台机器、单服务进程和本地 SQLite。Docker/HTTPS 模板已提供，目标环境尚需实际验证；运行范围、资源上限和更新回退见 [交付说明](docs/workbench-delivery.md)。
 

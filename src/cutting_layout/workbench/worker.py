@@ -7,7 +7,10 @@ from ..agent_tools import plan_cutting
 
 
 def main():
-    signal.alarm(90)
+    # The parent enforces the subprocess deadline on every platform. Unix
+    # additionally bounds an orphaned worker if the parent stops unexpectedly.
+    if hasattr(signal, 'alarm'):
+        signal.alarm(90)
     folder = Path(sys.argv[1])
     job = json.loads((folder / 'request.json').read_text(encoding='utf-8'))
     # Bound the search space without changing any process parameter.

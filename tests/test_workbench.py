@@ -459,6 +459,22 @@ def test_solver_deadline_and_missing_worker_response(tmp_path,monkeypatch):
     assert run_solver(JOB,tmp_path/'failure')['status']=='execution_error'
 
 
+def test_worker_without_unix_alarm_still_writes_utf8_response(tmp_path, monkeypatch):
+    import cutting_layout.workbench.worker as worker
+    (tmp_path / 'request.json').write_text(packed(JOB), encoding='utf-8')
+    monkeypatch.delattr(worker.signal, 'alarm', raising=False)
+    monkeypatch.setattr(worker.sys, 'argv', ['worker', str(tmp_path)])
+    seen = []
+    def calculate(job, **kwargs):
+        seen.append(job)
+        return {'status':'success', 'message':'虚构软件验证'}
+    monkeypatch.setattr(worker, 'plan_cutting', calculate)
+    worker.main()
+    assert seen[0]['max_bars'] == sum(JOB['demand'].values())
+    assert json.loads((tmp_path / 'response.json').read_text(encoding='utf-8')) == {
+        'status':'success', 'message':'虚构软件验证'}
+
+
 def test_restore_downloads_and_audit_after_real_order(tmp_path):
     root=tmp_path/'data';s=Store(root)
     s.create_user('alice',PASSWORD,'employee');s.create_user('manager',PASSWORD,'manager')
