@@ -4,11 +4,22 @@ import getpass
 import os
 from pathlib import Path
 import sqlite3
+import sys
 from .store import Store
 from .maintenance import backup, restore
 
 
+def _configure_output():
+    # Redirected output on an English Windows installation can default to
+    # cp1252, which cannot print the Chinese help and startup messages.
+    if sys.platform == 'win32':
+        for stream in (sys.stdout, sys.stderr):
+            if hasattr(stream, 'reconfigure'):
+                stream.reconfigure(encoding='utf-8', errors='backslashreplace')
+
+
 def main():
+    _configure_output()
     parser = argparse.ArgumentParser(description='MPCOS 内部下料工作台')
     parser.add_argument('--data-dir', type=Path, default=Path(os.environ.get('MPCOS_DATA_DIR', 'var/workbench')))
     commands = parser.add_subparsers(dest='command', required=True)

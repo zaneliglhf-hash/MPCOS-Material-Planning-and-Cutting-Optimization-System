@@ -113,7 +113,7 @@ Wait for `Uvicorn running on http://127.0.0.1:8765`, keep the terminal running a
 | Maintenance | Separate calculation processes, a single-process lock, backup/restore and health checks |
 | Verification | pytest/coverage gate, Node.js browser-handler regression tests, packaging and GitGuardian |
 
-As of 2026-10-10, local verification passed **254 Python tests with 87.67% coverage**; 7 frontend regression tests are also included in CI. CI covers Python 3.10–3.13. Evidence and remaining deployment/trial requirements are documented in the [acceptance record](docs/workbench-acceptance.md).
+As of 2026-10-10, local verification passed **255 Python tests with 87.69% coverage**; 7 frontend regression tests are also included in CI. CI covers Python 3.10–3.13. Evidence and remaining deployment/trial requirements are documented in the [acceptance record](docs/workbench-acceptance.md).
 
 The web app supports one host, one service process and SQLite on local disk. Deployment templates still require validation on the target machine. The [operations guide](docs/workbench-delivery.md) documents limits, maintenance and rollback.
 

@@ -1,6 +1,7 @@
 """Business acceptance: identities, immutable versions, failures and recovery."""
 from concurrent.futures import ThreadPoolExecutor
 import json
+import io
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -26,7 +27,7 @@ JOB = {'demand': {'1200': 3, '1800': 2}, 'stock_lengths_mm': [6000], 'kerf_mm': 
 def fake_solver(job, folder):
     folder.mkdir(parents=True)
     path = folder / 'plan.json'
-    path.write_text(packed(job))
+    path.write_text(packed(job), encoding='utf-8')
     return {'status': 'success', 'summary': {'finished_length_mm': 7200}, 'batches': [], 'files': {'json': str(path)}}
 
 
@@ -397,6 +398,22 @@ def test_cli_missing_web_dependency_shows_installation_guidance(monkeypatch, cap
     output = capsys.readouterr()
     assert '正在启动' in output.out
     assert '.[channel,web]' in output.err and 'docs/first-run.md' in output.err
+
+
+def test_windows_cli_can_print_chinese_to_redirected_output(monkeypatch):
+    import cutting_layout.workbench.__main__ as command
+    stdout, stderr = io.BytesIO(), io.BytesIO()
+    out = io.TextIOWrapper(stdout, encoding='cp1252')
+    err = io.TextIOWrapper(stderr, encoding='cp1252')
+    with monkeypatch.context() as patch:
+        patch.setattr(command.sys, 'platform', 'win32')
+        patch.setattr(command.sys, 'stdout', out)
+        patch.setattr(command.sys, 'stderr', err)
+        command._configure_output()
+        out.write('工作台已启动'); err.write('缺少依赖')
+        out.flush(); err.flush()
+    assert stdout.getvalue().decode('utf-8') == '工作台已启动'
+    assert stderr.getvalue().decode('utf-8') == '缺少依赖'
 
 
 def test_password_reset_revokes_sessions_and_login_throttle(tmp_path):
